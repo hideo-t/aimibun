@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI時代の身分診断 ─ 汝は何者か</title>
+<meta name="description" content="AIに対する理解・活用度を診断し、旧時代と新時代の身分を判定するエンターテインメント診断">
+<meta property="og:title" content="AI時代の身分診断 ─ 汝は何者か">
+<meta property="og:description" content="全10問であなたのAI時代の「新身分」を診断。あなたはAI覇王か、AI難民か。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Zen+Old+Mincho:wght@400;700;900&display=swap" rel="stylesheet">
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;background:#0d0b08;color:#e8dcc8;
+  font-family:'Noto Serif JP','Hiragino Mincho ProN','Yu Mincho',serif;
+  -webkit-font-smoothing:antialiased;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) scale(1);opacity:0}
+  10%{opacity:.4}90%{opacity:0}
+  100%{transform:translateY(-100vh) scale(.5);opacity:0}
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes stampIn{
+  0%{transform:scale(3) rotate(-15deg);opacity:0}
+  60%{transform:scale(1) rotate(3deg);opacity:1}
+  80%{transform:scale(1.05) rotate(-1deg)}
+  100%{transform:scale(1) rotate(2deg);opacity:1}
+}
+@keyframes revealLine{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.option-btn{
+  width:100%;padding:16px 20px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(200,180,150,.15);border-radius:8px;color:#e8dcc8;
+  font-family:'Noto Serif JP',serif;font-size:15px;text-align:left;
+  cursor:pointer;transition:all .3s ease;display:flex;align-items:center;
+}
+.option-btn:hover{background:rgba(200,180,150,.08);border-color:rgba(200,180,150,.3);transform:translateX(6px)}
+.option-btn.selected{background:rgba(196,30,58,.15);border-color:rgba(196,30,58,.5)}
+.option-btn.faded{opacity:.3}
+.progress-segment{height:100%;transition:background .4s ease;flex:1;border-radius:2px}
+.result-card{background:rgba(255,255,255,.03);border:1px solid rgba(200,180,150,.12);border-radius:12px;padding:28px;margin-bottom:20px}
+.restart-btn{
+  padding:14px 32px;border-radius:8px;font-family:'Noto Serif JP',serif;font-size:15px;
+  cursor:pointer;transition:all .3s ease;background:rgba(200,180,150,.08);color:#e8dcc8;
+  border:1px solid rgba(200,180,150,.15);
+}
+.restart-btn:hover{background:rgba(200,180,150,.15);transform:translateY(-2px)}
+.start-btn{
+  padding:18px 56px;background:linear-gradient(135deg,#8B0000,#C41E3A);border:none;border-radius:8px;
+  color:#e8dcc8;font-size:18px;font-family:'Zen Old Mincho','Noto Serif JP',serif;font-weight:700;
+  cursor:pointer;transition:all .3s ease;letter-spacing:4px;
+}
+.start-btn:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(139,0,0,.4)}
+.tier-bar{height:14px;border-radius:4px;transition:width 1.5s ease-out;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px}
+.tier-bar.active{height:22px}
+.bg-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(ellipse at 20% 50%,rgba(139,0,0,.06) 0%,transparent 60%),
+              radial-gradient(ellipse at 80% 80%,rgba(200,180,150,.04) 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+.particle{position:absolute;bottom:-10px;width:3px;height:3px;border-radius:50%;background:rgba(200,180,150,.3)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+var h=React.createElement,useState=React.useState;
+
+var QUESTIONS=[
+  {id:1,category:"\ud83d\udcb0 課金",question:"AIサービスにいくら払っていますか？",options:[
+    {text:"複数サービスに月1万円以上",score:4},{text:"月3,000円前後（1つの有料プラン）",score:3},
+    {text:"無料版のみ使っている",score:2},{text:"AIに金を払う意味がわからない",score:1}]},
+  {id:2,category:"\u23f1\ufe0f 頻度",question:"AIをどのくらいの頻度で使っていますか？",options:[
+    {text:"毎日、息を吸うように使う",score:4},{text:"週に数回、仕事や調べ物で",score:3},
+    {text:"たまに話題のものを試す程度",score:2},{text:"ほぼ使わない / 使ったことがない",score:1}]},
+  {id:3,category:"\ud83e\udde0 理解",question:"「プロンプトエンジニアリング」と聞いて…",options:[
+    {text:"自分なりのテクニックを体系化している",score:4},{text:"意味は分かる。工夫して書いている",score:3},
+    {text:"聞いたことはある気がする",score:2},{text:"何それ？新しいラーメン屋？",score:1}]},
+  {id:4,category:"\u2694\ufe0f 活用",question:"AIを主に何に使っていますか？",options:[
+    {text:"事業戦略・創作・開発など高度な意思決定",score:4},{text:"資料作成・文章推敲・業務効率化",score:3},
+    {text:"ちょっとした質問や暇つぶし",score:2},{text:"使い道がよくわからない",score:1}]},
+  {id:5,category:"\ud83d\udcda 学習",question:"AI関連の情報をどう追っていますか？",options:[
+    {text:"海外論文・技術ブログまで日常的にチェック",score:4},{text:"SNSやニュースで新サービスは一応追う",score:3},
+    {text:"話題になったら見る程度",score:2},{text:"特に追っていない。興味もない",score:1}]},
+  {id:6,category:"\ud83d\udd2e 危機感",question:"「AIに仕事を奪われる」という話をどう思いますか？",options:[
+    {text:"奪われる側でなく、奪う側の武器にする",score:4},{text:"危機感はある。だからAIを学んでいる",score:3},
+    {text:"自分の仕事は大丈夫だと思う…多分",score:2},{text:"また大げさな話でしょ。PCの時もそうだった",score:1}]},
+  {id:7,category:"\ud83d\udee0\ufe0f 道具",question:"以下のうち、使ったことがあるものは？",options:[
+    {text:"ChatGPT, Claude, Gemini, Midjourney等 複数駆使",score:4},{text:"ChatGPTともう1つくらい",score:3},
+    {text:"ChatGPTだけなら…",score:2},{text:"どれも使ったことがない",score:1}]},
+  {id:8,category:"\ud83d\udcad 思考",question:"AIに対する正直な気持ちは？",options:[
+    {text:"人生を変えた。もう手放せない相棒",score:4},{text:"便利だと思う。可能性を感じている",score:3},
+    {text:"便利かもだけど、なんか不安もある",score:2},{text:"正直、気持ち悪い。人間らしくない",score:1}]},
+  {id:9,category:"\ud83d\udc65 環境",question:"あなたの周囲のAI活用状況は？",options:[
+    {text:"AI活用者のコミュニティに属している",score:4},{text:"職場や友人で使っている人がちらほら",score:3},
+    {text:"自分以外にあまり使っている人がいない",score:2},{text:"周囲では話題にすらならない",score:1}]},
+  {id:10,category:"\ud83d\ude80 未来",question:"5年後、あなたはAIとどう関わっていると思いますか？",options:[
+    {text:"AIを活用した事業や専門性で圧倒的な立場に",score:4},{text:"AIをうまく使いこなして生産性を上げている",score:3},
+    {text:"世の中に合わせてなんとなく使っている",score:2},{text:"考えたことがない。なるようになる",score:1}]}
+];
+
+var RESULTS=[
+  {minScore:35,oldClass:"天皇・皇族",oldEmoji:"\ud83d\udc51",
+    oldDesc:"古代日本の最高権威。万民の上に君臨し、国の秩序そのものを体現する存在。",
+    newClass:"AI覇王",newEmoji:"\ud83c\udfef",
+    newDesc:"AIを完全に支配下に置き、新時代の「秩序」を自ら創り出す者。複数のAIを自在に操り、事業・創作・意思決定のすべてでAIを戦略兵器として運用する。この層にとってAIは道具ですらなく、自分の思考の延長そのもの。",
+    newTrait:"AIなしの世界にはもう戻れない。むしろAIがない時代が信じられない。",
+    color:"#C41E3A",gradient:"linear-gradient(135deg,#1a0000 0%,#4a0e0e 30%,#8B0000 60%,#C41E3A 100%)",population:"推定 2〜3%"},
+  {minScore:29,oldClass:"貴族・公家",oldEmoji:"\ud83c\udfdb\ufe0f",
+    oldDesc:"朝廷に仕え、文化と教養で権威を築いた特権階級。政の中枢を動かした知識人たち。",
+    newClass:"AI貴族",newEmoji:"\u269c\ufe0f",
+    newDesc:"有料プランを「投資」として使い倒し、AIで思考の壁を次々と突破する。業務効率は非活用者の数倍。AIリテラシーという「新しい教養」を持つ上位層。",
+    newTrait:"月3,000円を「安すぎる投資」と感じている。",
+    color:"#6B3FA0",gradient:"linear-gradient(135deg,#1a0a2e 0%,#2d1b4e 30%,#4a2d7a 60%,#6B3FA0 100%)",population:"推定 10〜15%"},
+  {minScore:23,oldClass:"武士",oldEmoji:"\u2694\ufe0f",
+    oldDesc:"刀を帯び、主君に仕えた戦士階級。実力と忠義で地位を築いた実務者たち。",
+    newClass:"AI足軽",newEmoji:"\ud83d\udde1\ufe0f",
+    newDesc:"AIの力は認識しており、実戦でも使い始めている。だがまだ「使いこなす」には至っていない。伸びしろは大きいが、ここから上に行けるかが運命の分かれ道。",
+    newTrait:"「もっと使わなきゃ」と思いつつ、日常に流されがち。",
+    color:"#2E6B4F",gradient:"linear-gradient(135deg,#0a1f16 0%,#1a3d2e 30%,#2E6B4F 60%,#3d8b68 100%)",population:"推定 20〜25%"},
+  {minScore:15,oldClass:"百姓",oldEmoji:"\ud83c\udf3e",
+    oldDesc:"人口の8割を占めた農民層。社会の基盤を支えたが、支配される側だった。",
+    newClass:"AI百姓",newEmoji:"\ud83c\udf3f",
+    newDesc:"AIの存在は知っているし、たまに触る。だが生活や仕事に本格的に組み込めていない。「便利そう」で止まっている多数派。気づかないうちに、上位層との差が静かに広がっている。",
+    newTrait:"無料版で「十分」と思っているが、有料版の世界を知らない。",
+    color:"#8B7355",gradient:"linear-gradient(135deg,#1a1408 0%,#3d2e14 30%,#6b5530 60%,#8B7355 100%)",population:"推定 35〜40%"},
+  {minScore:0,oldClass:"浪人・無宿",oldEmoji:"\ud83c\udf42",
+    oldDesc:"主君を失い、社会の枠組みから外れた漂流者。制度の外側で生きることを余儀なくされた。",
+    newClass:"AI難民",newEmoji:"\ud83c\udf2b\ufe0f",
+    newDesc:"AI革命が起きていることすら実感していない。デジタル化の波にも乗り遅れ気味で、AIによる自動化の最前線に立たされるリスクが最も高い層。",
+    newTrait:"「AIなんて一時的なブーム」と思っている…かもしれない。",
+    color:"#5A5A5A",gradient:"linear-gradient(135deg,#111 0%,#2a2a2a 30%,#444 60%,#5A5A5A 100%)",population:"推定 20〜25%"}
+];
+
+var KANJI=["壱","弐","参","肆"],PYR_W=[30,45,60,80,100];
+
+function getResult(s){for(var i=0;i<RESULTS.length;i++){if(s>=RESULTS[i].minScore)return RESULTS[i]}return RESULTS[RESULTS.length-1]}
+
+function App(){
+  var _scr=useState("intro"),screen=_scr[0],setScreen=_scr[1];
+  var _cq=useState(0),currentQ=_cq[0],setCurrentQ=_cq[1];
+  var _sc=useState([]),scores=_sc[0],setScores=_sc[1];
+  var _sel=useState(null),selOpt=_sel[0],setSelOpt=_sel[1];
+  var _tr=useState(false),isTrans=_tr[0],setIsTrans=_tr[1];
+  var _sh=useState(false),showRes=_sh[0],setShowRes=_sh[1];
+  var _rv=useState(0),revStage=_rv[0],setRevStage=_rv[1];
+
+  var total=scores.reduce(function(a,b){return a+b},0);
+  var res=getResult(total),max=QUESTIONS.length*4,pct=Math.round(total/max*100);
+
+  function answer(score){
+    if(isTrans)return;setSelOpt(score);setIsTrans(true);
+    setTimeout(function(){
+      var ns=scores.concat([score]);setScores(ns);setSelOpt(null);setIsTrans(false);
+      if(currentQ<QUESTIONS.length-1){setCurrentQ(currentQ+1)}
+      else{setScreen("result");
+        setTimeout(function(){setRevStage(1)},500);
+        setTimeout(function(){setRevStage(2)},1800);
+        setTimeout(function(){setRevStage(3)},3200);
+        setTimeout(function(){setShowRes(true)},4200)}
+    },600);
+  }
+
+  function restart(){setScreen("intro");setCurrentQ(0);setScores([]);setSelOpt(null);setShowRes(false);setRevStage(0);window.scrollTo(0,0)}
+
+  // Particles
+  var parts=[];
+  for(var i=0;i<12;i++)parts.push(h("div",{key:"p"+i,className:"particle",style:{left:(Math.sin(i*2.5)*40+50)+"%",animation:"floatUp 8s "+(i*.7)+"s infinite ease-out"}}));
+
+  // INTRO
+  function intro(){
+    return h("div",{style:{animation:"fadeInUp 1s ease-out",paddingTop:40}},
+      h("div",{style:{textAlign:"center",marginBottom:48}},
+        h("div",{style:{fontSize:12,letterSpacing:6,color:"rgba(200,180,150,.5)",marginBottom:24}},"AI時代の身分診断"),
+        h("h1",{style:{fontSize:42,fontWeight:900,lineHeight:1.3,margin:"0 0 8px",fontFamily:"'Zen Old Mincho','Noto Serif JP',serif"}},"汝は何者か"),
+        h("div",{style:{width:60,height:2,background:"linear-gradient(90deg,transparent,#C41E3A,transparent)",margin:"20px auto"}}),
+        h("p",{style:{fontSize:15,lineHeight:2,color:"rgba(200,180,150,.7)",maxWidth:480,margin:"0 auto"}},
+          "現代社会は「民主」で「平等」だと言われている。",h("br"),
+          "だが、本当にそうだろうか。",h("br"),h("br"),
+          "AIという新たな「刀」を手にした者と、",h("br"),
+          "その存在すら知らぬ者の間に、",h("br"),
+          h("span",{style:{color:"#C41E3A"}},"見えない身分の壁"),"が静かに立ち上がっている。")),
+      h("div",{style:{background:"rgba(255,255,255,.02)",border:"1px solid rgba(200,180,150,.1)",borderRadius:12,padding:28,marginBottom:40}},
+        h("div",{style:{fontSize:13,color:"rgba(200,180,150,.5)",marginBottom:16,letterSpacing:2}},"── 診断の仕組み"),
+        h("p",{style:{fontSize:14,lineHeight:1.9,color:"rgba(200,180,150,.65)",margin:0}},
+          "全",h("strong",{style:{color:"#e8dcc8"}},"10問"),"の問いに答えることで、AIに対するあなたの理解度・活用度・意識を多角的に測定します。結果は、日本の歴史的身分制度になぞらえた",
+          h("strong",{style:{color:"#e8dcc8"}},"「旧身分」"),"と、AI時代の新たな階層を示す",
+          h("strong",{style:{color:"#C41E3A"}},"「新身分」"),"で発表されます。")),
+      h("div",{style:{textAlign:"center"}},h("button",{className:"start-btn",onClick:function(){setScreen("quiz")}},"診断を始める")),
+      h("div",{style:{textAlign:"center",marginTop:32}},h("span",{style:{fontSize:11,color:"rgba(200,180,150,.3)"}},"※この診断はエンターテインメントです。実際の能力や価値を判定するものではありません。")));
+  }
+
+  // QUIZ
+  function quiz(){
+    var q=QUESTIONS[currentQ];
+    return h("div",{style:{paddingTop:24}},
+      h("div",{style:{marginBottom:32}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          h("span",{style:{fontSize:12,color:"rgba(200,180,150,.4)",letterSpacing:2}},q.category),
+          h("span",{style:{fontSize:13,color:"rgba(200,180,150,.5)"}},currentQ+1,h("span",{style:{color:"rgba(200,180,150,.25)"}}," / "+QUESTIONS.length))),
+        h("div",{style:{display:"flex",gap:3,height:4}},
+          QUESTIONS.map(function(_,i){return h("div",{key:i,className:"progress-segment",style:{background:i<currentQ?"#C41E3A":i===currentQ?"rgba(196,30,58,.5)":"rgba(200,180,150,.1)"}})}))),
+      h("div",{key:currentQ,style:{animation:"fadeInUp .5s ease-out"}},
+        h("h2",{style:{fontSize:22,fontWeight:700,lineHeight:1.6,marginBottom:32,fontFamily:"'Zen Old Mincho','Noto Serif JP',serif"}},q.question),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+          q.options.map(function(o,i){
+            var isSel=selOpt===o.score,isFad=isTrans&&!isSel;
+            return h("button",{key:i,className:"option-btn"+(isSel?" selected":"")+(isFad?" faded":""),onClick:function(){answer(o.score)},disabled:isTrans},
+              h("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",border:"1px solid rgba(200,180,150,.2)",marginRight:14,fontSize:12,color:"rgba(200,180,150,.4)",flexShrink:0}},KANJI[i]),
+              o.text)}))));
+  }
+
+  // RESULT
+  function result(){
+    if(!showRes){
+      var items=[];
+      if(revStage>=1)items.push(h("div",{key:"r1",style:{animation:"fadeIn 1s ease-out",marginBottom:24}},h("div",{style:{fontSize:14,color:"rgba(200,180,150,.5)",letterSpacing:4}},"全十問の回答を分析中…")));
+      if(revStage>=2)items.push(h("div",{key:"r2",style:{animation:"fadeIn 1s ease-out",marginBottom:24}},h("div",{style:{fontSize:48,fontWeight:900,fontFamily:"'Zen Old Mincho',serif",color:"#C41E3A"}},total,h("span",{style:{fontSize:20,color:"rgba(200,180,150,.4)"}}," / "+max))));
+      if(revStage>=3)items.push(h("div",{key:"r3",style:{animation:"fadeIn .8s ease-out"}},h("div",{style:{fontSize:13,color:"rgba(200,180,150,.4)",letterSpacing:3}},"汝の身分が明らかになる──")));
+      return h("div",{style:{paddingTop:32}},h("div",{style:{textAlign:"center",minHeight:400,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}},items));
+    }
+    var r=res;
+    return h("div",{style:{paddingTop:32}},h("div",{style:{animation:"fadeInUp .8s ease-out"}},
+      // Header
+      h("div",{style:{textAlign:"center",marginBottom:40}},
+        h("div",{style:{fontSize:11,letterSpacing:5,color:"rgba(200,180,150,.4)",marginBottom:16}},"診断結果"),
+        h("div",{style:{fontSize:64,marginBottom:8}},r.newEmoji)),
+      // Score bar
+      h("div",{style:{marginBottom:40}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,color:"rgba(200,180,150,.4)",marginBottom:8}},
+          h("span",null,"AI難民"),h("span",null,"スコア: "+total+" / "+max),h("span",null,"AI覇王")),
+        h("div",{style:{background:"rgba(200,180,150,.08)",borderRadius:6,height:10,overflow:"hidden"}},
+          h("div",{style:{width:pct+"%",height:"100%",borderRadius:6,background:"linear-gradient(90deg,#5A5A5A,"+r.color+")",transition:"width 1.5s ease-out"}}))),
+      // Old class
+      h("div",{className:"result-card",style:{animation:"revealLine .6s ease-out .2s both"}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          h("span",{style:{fontSize:11,letterSpacing:3,color:"rgba(200,180,150,.4)"}},"旧時代の身分"),
+          h("div",{style:{flex:1,height:1,background:"rgba(200,180,150,.08)"}})),
+        h("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:12}},
+          h("span",{style:{fontSize:36}},r.oldEmoji),
+          h("span",{style:{fontSize:28,fontWeight:900,fontFamily:"'Zen Old Mincho',serif"}},r.oldClass)),
+        h("p",{style:{fontSize:14,lineHeight:1.8,color:"rgba(200,180,150,.6)",margin:0}},r.oldDesc)),
+      // Arrow
+      h("div",{style:{textAlign:"center",margin:"16px 0",fontSize:24,color:"rgba(200,180,150,.2)"}},"\u2193"),
+      // New class
+      h("div",{className:"result-card",style:{background:r.gradient,border:"1px solid "+r.color+"33",animation:"revealLine .6s ease-out .6s both",position:"relative",overflow:"hidden"}},
+        h("div",{style:{position:"absolute",top:16,right:16,fontSize:11,color:r.color,border:"2px solid "+r.color,borderRadius:6,padding:"4px 10px",transform:"rotate(2deg)",opacity:.6,fontWeight:700,letterSpacing:2,animation:"stampIn .6s ease-out 1.2s both"}},"認定"),
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          h("span",{style:{fontSize:11,letterSpacing:3,color:"rgba(232,220,200,.5)"}},"AI時代の新身分"),
+          h("div",{style:{flex:1,height:1,background:"rgba(232,220,200,.08)"}})),
+        h("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:16}},
+          h("span",{style:{fontSize:36}},r.newEmoji),
+          h("div",null,
+            h("span",{style:{fontSize:32,fontWeight:900,fontFamily:"'Zen Old Mincho',serif",color:"#fff"}},r.newClass),
+            h("div",{style:{fontSize:12,color:"rgba(232,220,200,.4)",marginTop:4}},"推定人口比: "+r.population))),
+        h("p",{style:{fontSize:14,lineHeight:1.9,color:"rgba(232,220,200,.8)",margin:"0 0 16px"}},r.newDesc),
+        h("div",{style:{background:"rgba(0,0,0,.2)",borderRadius:8,padding:"12px 16px",fontSize:13,color:"rgba(232,220,200,.6)",fontStyle:"italic"}},
+          "\ud83d\udcac 「"+r.newTrait+"」")),
+      // Pyramid
+      h("div",{className:"result-card",style:{animation:"revealLine .6s ease-out 1s both"}},
+        h("div",{style:{fontSize:11,letterSpacing:3,color:"rgba(200,180,150,.4)",marginBottom:20}},"AI新階級ピラミッド"),
+        RESULTS.map(function(rr,i){
+          var isYou=rr.newClass===r.newClass;
+          return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:12,marginBottom:10,opacity:isYou?1:.4}},
+            h("div",{style:{width:60,fontSize:12,textAlign:"right",flexShrink:0,color:isYou?r.color:"rgba(200,180,150,.5)"}},rr.newEmoji+" "+rr.newClass),
+            h("div",{style:{flex:1}},
+              h("div",{className:"tier-bar"+(isYou?" active":""),style:{width:PYR_W[i]+"%",background:isYou?rr.color:"rgba(200,180,150,.1)",color:isYou?"#fff":"transparent"}},
+                isYou?h("span",{style:{fontWeight:700}},"\u25c4 あなた"):null)),
+            h("div",{style:{width:56,fontSize:10,color:"rgba(200,180,150,.3)",flexShrink:0}},rr.population.replace("推定 ","")))
+        })),
+      // Warning
+      h("div",{style:{background:"rgba(196,30,58,.05)",border:"1px solid rgba(196,30,58,.15)",borderRadius:12,padding:24,marginBottom:28,textAlign:"center",animation:"revealLine .6s ease-out 1.4s both"}},
+        h("div",{style:{fontSize:14,lineHeight:2,color:"rgba(200,180,150,.7)"}},
+          "民主主義も、平等も、幻想かもしれない。",h("br"),
+          "だが、",h("span",{style:{color:"#C41E3A",fontWeight:700}},"AIという刀"),"は誰にでも手に取れる。",h("br"),
+          h("span",{style:{fontSize:12,color:"rgba(200,180,150,.4)"}},"問題は、あなたがそれを握るかどうかだ。"))),
+      // Restart
+      h("div",{style:{textAlign:"center",marginTop:8}},h("button",{className:"restart-btn",onClick:restart},"もう一度診断する")),
+      h("div",{style:{textAlign:"center",marginTop:24,fontSize:11,color:"rgba(200,180,150,.2)"}},"※この診断はエンターテインメントです。すべての人に無限の可能性があります。")));
+  }
+
+  var content=null;
+  if(screen==="intro")content=intro();
+  else if(screen==="quiz")content=quiz();
+  else if(screen==="result")content=result();
+
+  return h("div",{style:{position:"relative",overflow:"hidden",minHeight:"100vh"}},
+    h("div",{className:"bg-overlay"}),
+    parts,
+    h("div",{style:{maxWidth:640,margin:"0 auto",padding:"20px 20px 60px",position:"relative",zIndex:1}},content));
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body>
+</html>
